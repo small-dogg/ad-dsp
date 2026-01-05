@@ -5,11 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum AdStatus {
-    PENDING("대기"),
-    ACTIVE("활성"),
-    STOPPED("중지"),
-    ENDED("종료");
+public enum BudgetType {
+    LIMITED("제한"),
+    UNLIMITED("무제한");
 
     private final String description;
 }

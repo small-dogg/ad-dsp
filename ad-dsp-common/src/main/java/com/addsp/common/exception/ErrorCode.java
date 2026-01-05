@@ -24,6 +24,9 @@ public enum ErrorCode {
 
     // AdGroup
     AD_GROUP_NOT_FOUND(404, "AG001", "광고그룹을 찾을 수 없습니다."),
+    AD_GROUP_NAME_DUPLICATE(409, "AG002", "동일한 이름의 광고그룹이 이미 존재합니다."),
+    AD_GROUP_CANNOT_DELETE(400, "AG003", "활성 상태의 광고그룹은 삭제할 수 없습니다."),
+    AD_GROUP_INVALID_BUDGET(400, "AG004", "일 예산은 최소 10,000원 이상이어야 합니다."),
 
     // Ad
     AD_NOT_FOUND(404, "AD001", "광고를 찾을 수 없습니다."),

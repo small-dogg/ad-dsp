@@ -17,4 +17,10 @@ public interface AdGroupRepository {
     List<AdGroup> findByPartnerIdAndStatus(Long partnerId, AdStatus status);
 
     List<AdGroup> findActiveByPartnerId(Long partnerId);
+
+    boolean existsByPartnerIdAndName(Long partnerId, String name);
+
+    boolean existsByPartnerIdAndNameAndIdNot(Long partnerId, String name, Long id);
+
+    void delete(AdGroup adGroup);
 }

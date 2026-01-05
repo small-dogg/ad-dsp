@@ -7,6 +7,9 @@ dependencies {
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.20.0'
+
     // QueryDSL
     implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-apt:5.1.0:jakarta'
