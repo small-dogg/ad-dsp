@@ -1,0 +1,4 @@
+dependencies {
+    // JSON 직렬화
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+}

@@ -1,0 +1,4 @@
+rootProject.name = 'ad-dsp'
+
+include 'ad-dsp-common'
+include 'ad-dsp-domain'
