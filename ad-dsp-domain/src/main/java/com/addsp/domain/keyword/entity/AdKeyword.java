@@ -1,6 +1,6 @@
-package com.addsp.domain.ad.entity;
+package com.addsp.domain.keyword.entity;
 
-import com.addsp.common.constant.AdStatus;
+import com.addsp.common.constant.KeywordMatchType;
 import com.addsp.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,11 +10,15 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+/**
+ * 광고 키워드 엔티티.
+ * 광고그룹 내에서 상품(Deal)과 키워드를 연결하고 입찰가를 관리한다.
+ */
 @Entity
-@Table(name = "ads")
+@Table(name = "ad_keywords")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Ad extends BaseTimeEntity {
+public class AdKeyword extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,40 +31,30 @@ public class Ad extends BaseTimeEntity {
     private Long dealId;
 
     @Column(nullable = false)
-    private String productName;
-
-    private BigDecimal bidAmount;
+    private Long keywordId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AdStatus status;
+    private KeywordMatchType matchType;
+
+    @Column(nullable = false)
+    private BigDecimal bidAmount;
 
     @Builder
-    public Ad(Long adGroupId, Long dealId, String productName, BigDecimal bidAmount) {
+    public AdKeyword(Long adGroupId, Long dealId, Long keywordId,
+                     KeywordMatchType matchType, BigDecimal bidAmount) {
         this.adGroupId = adGroupId;
         this.dealId = dealId;
-        this.productName = productName;
+        this.keywordId = keywordId;
+        this.matchType = matchType;
         this.bidAmount = bidAmount;
-        this.status = AdStatus.ACTIVE;
-    }
-
-    public void activate() {
-        this.status = AdStatus.ACTIVE;
-    }
-
-    public void pause() {
-        this.status = AdStatus.PAUSED;
-    }
-
-    public void end() {
-        this.status = AdStatus.ENDED;
-    }
-
-    public boolean isActive() {
-        return this.status == AdStatus.ACTIVE;
     }
 
     public void updateBidAmount(BigDecimal bidAmount) {
         this.bidAmount = bidAmount;
+    }
+
+    public void updateMatchType(KeywordMatchType matchType) {
+        this.matchType = matchType;
     }
 }

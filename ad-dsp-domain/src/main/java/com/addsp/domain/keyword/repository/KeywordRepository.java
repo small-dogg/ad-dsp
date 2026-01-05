@@ -11,13 +11,9 @@ public interface KeywordRepository {
 
     Optional<Keyword> findById(Long id);
 
-    List<Keyword> findByAdGroupId(Long adGroupId);
-
-    List<Keyword> findByAdGroupIdAndNegative(Long adGroupId, boolean negative);
+    Optional<Keyword> findByKeyword(String keyword);
 
     List<Keyword> findByKeywordContaining(String keyword);
 
-    boolean existsByAdGroupIdAndKeyword(Long adGroupId, String keyword);
-
-    void deleteById(Long id);
+    boolean existsByKeyword(String keyword);
 }

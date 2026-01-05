@@ -1,5 +1,6 @@
 package com.addsp.domain.adgroup.repository;
 
+import com.addsp.common.constant.AdStatus;
 import com.addsp.domain.adgroup.entity.AdGroup;
 
 import java.util.List;
@@ -11,7 +12,9 @@ public interface AdGroupRepository {
 
     Optional<AdGroup> findById(Long id);
 
-    List<AdGroup> findByCampaignId(Long campaignId);
+    List<AdGroup> findByPartnerId(Long partnerId);
 
-    List<AdGroup> findActiveByCampaignId(Long campaignId);
+    List<AdGroup> findByPartnerIdAndStatus(Long partnerId, AdStatus status);
+
+    List<AdGroup> findActiveByPartnerId(Long partnerId);
 }

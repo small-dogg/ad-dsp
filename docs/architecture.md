@@ -1,7 +1,8 @@
 # DSP 광고 플랫폼 아키텍처
 
 ## 개요
-키워드 및 카테고리 기반 광고 플랫폼의 시스템 아키텍처를 정의한다.
+키워드 기반 광고 플랫폼의 시스템 아키텍처를 정의한다.
+파트너가 Deal 서비스의 상품을 키워드와 연결하여 광고로 등록하고, 키워드 검색 및 카테고리 탐색 시 광고를 노출한다.
 
 ---
 
@@ -20,9 +21,69 @@ ad-dsp/
 
 ---
 
-## 2. 모듈 상세
+## 2. 엔티티 구조
 
-### 2.1 ad-dsp-common
+### 2.1 엔티티 관계도
+
+```
+Partner (파트너)
+  ├── AdGroup (광고그룹) [1:N]
+  │     └── AdKeyword (키워드-상품 연결) [1:N]
+  │           ├── → Deal (상품)
+  │           └── → Keyword (키워드 마스터)
+  ├── Deal (상품) [1:N]
+  ├── Cash (캐시) [1:N]
+  └── Transaction (거래내역) [1:N]
+
+Keyword (키워드 마스터) - 독립
+NegativeKeyword (글로벌 금칙어) - 독립
+```
+
+### 2.2 엔티티 상세
+
+| 엔티티 | 테이블 | 설명 |
+|--------|--------|------|
+| **Partner** | partners | 파트너(광고주) 정보 |
+| **AdGroup** | ad_groups | 광고그룹. 예산 및 운영 상태 관리 |
+| **Deal** | deals | Deal 서비스에서 동기화된 상품 |
+| **Keyword** | keywords | 키워드 마스터 |
+| **AdKeyword** | ad_keywords | 광고그룹 내 상품-키워드 연결 및 입찰가 |
+| **NegativeKeyword** | negative_keywords | 글로벌 금칙어 (광고 등록 시 자동 검수용) |
+| **Cash** | cashes | 파트너 캐시 (충전 단위별 관리) |
+| **Transaction** | transactions | 거래 내역 |
+
+### 2.3 주요 엔티티 필드
+
+**Partner**
+```
+id, email, password, businessName, businessNumber, contactName, contactPhone, status
+```
+
+**AdGroup**
+```
+id, partnerId, name, dailyBudget, totalBudget, spentAmount, startDate, endDate, status
+```
+
+**Deal**
+```
+id, partnerId, dealId, name, category1, category2, category3, synchronizedAt
+```
+
+**AdKeyword**
+```
+id, adGroupId, dealId, keywordId, matchType, bidAmount
+```
+
+**Cash**
+```
+id, partnerId, type(CHARGED/FREE/REFUND), amount, balance, expiredAt
+```
+
+---
+
+## 3. 모듈 상세
+
+### 3.1 ad-dsp-common
 공통으로 사용되는 코드
 
 ```
@@ -31,46 +92,43 @@ ad-dsp-common/
     ├── exception/         # 공통 예외 클래스
     ├── response/          # API 응답 포맷
     ├── util/              # 유틸리티 클래스
-    └── constant/          # 상수 정의
+    └── constant/          # 상수 정의 (AdStatus, PartnerStatus, KeywordMatchType)
 ```
 
 **의존성:** 없음 (독립 모듈)
 
-### 2.2 ad-dsp-domain
+### 3.2 ad-dsp-domain
 핵심 비즈니스 로직과 도메인 모델
 
 ```
 ad-dsp-domain/
 └── src/main/java/com/addsp/domain/
+    ├── common/            # BaseTimeEntity
     ├── partner/
-    │   ├── entity/        # Partner, PartnerGrade
-    │   ├── repository/    # PartnerRepository (interface)
-    │   └── service/       # PartnerService
-    ├── campaign/
-    │   ├── entity/        # Campaign, AdGroup, Ad
+    │   ├── entity/        # Partner
+    │   ├── repository/
+    │   └── service/
+    ├── adgroup/
+    │   ├── entity/        # AdGroup
+    │   ├── repository/
+    │   └── service/
+    ├── deal/
+    │   ├── entity/        # Deal
     │   ├── repository/
     │   └── service/
     ├── keyword/
-    │   ├── entity/        # Keyword, NegativeKeyword
+    │   ├── entity/        # Keyword, AdKeyword, NegativeKeyword
     │   ├── repository/
     │   └── service/
-    ├── category/
-    │   ├── entity/        # Category, CategoryTargeting
-    │   ├── repository/
-    │   └── service/
-    ├── billing/
-    │   ├── entity/        # Credit, Transaction, Settlement
-    │   ├── repository/
-    │   └── service/
-    └── tracking/
-        ├── entity/        # Impression, Click, Conversion
+    └── billing/
+        ├── entity/        # Cash, Transaction
         ├── repository/
         └── service/
 ```
 
 **의존성:** common
 
-### 2.3 ad-dsp-infra
+### 3.3 ad-dsp-infra
 외부 시스템 연동 및 인프라 구현체
 
 ```
@@ -78,9 +136,10 @@ ad-dsp-infra/
 └── src/main/java/com/addsp/infra/
     ├── persistence/
     │   ├── partner/       # PartnerJpaRepository, PartnerRepositoryImpl
-    │   ├── campaign/
+    │   ├── adgroup/
+    │   ├── deal/
     │   ├── keyword/
-    │   └── ...
+    │   └── billing/
     ├── client/
     │   └── deal/          # DealServiceClient (외부 API)
     ├── cache/             # Redis 캐시 구현
@@ -89,7 +148,7 @@ ad-dsp-infra/
 
 **의존성:** common, domain
 
-### 2.4 ad-dsp-api
+### 3.4 ad-dsp-api
 파트너(광고주)용 REST API
 
 ```
@@ -97,9 +156,8 @@ ad-dsp-api/
 └── src/main/java/com/addsp/api/
     ├── controller/
     │   ├── partner/       # 파트너 관리 API
-    │   ├── campaign/      # 캠페인 관리 API
     │   ├── adgroup/       # 광고그룹 관리 API
-    │   ├── ad/            # 광고 관리 API
+    │   ├── deal/          # 상품 조회 API
     │   ├── keyword/       # 키워드 관리 API
     │   ├── report/        # 리포팅 API
     │   └── billing/       # 정산 API
@@ -112,7 +170,7 @@ ad-dsp-api/
 
 **의존성:** common, domain, infra
 
-### 2.5 ad-dsp-serving
+### 3.5 ad-dsp-serving
 광고 서빙 전용 API (고성능)
 
 ```
@@ -131,7 +189,7 @@ ad-dsp-serving/
 
 **의존성:** common, domain, infra
 
-### 2.6 ad-dsp-admin
+### 3.6 ad-dsp-admin
 관리자용 API
 
 ```
@@ -139,7 +197,7 @@ ad-dsp-admin/
 └── src/main/java/com/addsp/admin/
     ├── controller/
     │   ├── partner/       # 파트너 관리
-    │   ├── category/      # 카테고리 마스터 관리
+    │   ├── keyword/       # 금칙어 관리
     │   ├── policy/        # 정책 관리
     │   └── dashboard/     # 운영 대시보드
     ├── dto/
@@ -149,7 +207,7 @@ ad-dsp-admin/
 
 **의존성:** common, domain, infra
 
-### 2.7 ad-dsp-batch
+### 3.7 ad-dsp-batch
 배치 작업
 
 ```
@@ -158,7 +216,7 @@ ad-dsp-batch/
     ├── job/
     │   ├── settlement/    # 일별 정산
     │   ├── statistics/    # 통계 집계
-    │   └── sync/          # 데이터 동기화
+    │   └── sync/          # Deal 서비스 동기화
     ├── tasklet/
     └── config/            # Spring Batch 설정
 ```
@@ -167,7 +225,7 @@ ad-dsp-batch/
 
 ---
 
-## 3. 모듈 의존성
+## 4. 모듈 의존성
 
 ```
                     ┌─────────────┐
@@ -191,7 +249,7 @@ ad-dsp-batch/
 
 ---
 
-## 4. 레이어 아키텍처
+## 5. 레이어 아키텍처
 
 각 API 모듈 내부는 다음 레이어 구조를 따른다.
 
@@ -209,7 +267,7 @@ ad-dsp-batch/
 
 ---
 
-## 5. 기술 스택
+## 6. 기술 스택
 
 | 구분 | 기술 |
 |------|------|
@@ -217,6 +275,7 @@ ad-dsp-batch/
 | Framework | Spring Boot 4.0.1 |
 | Build | Gradle 8.14+ |
 | Database | PostgreSQL |
+| ORM | JPA + QueryDSL |
 | Cache | Redis |
 | Batch | Spring Batch 5.x |
 | API Docs | SpringDoc OpenAPI |
@@ -224,55 +283,77 @@ ad-dsp-batch/
 
 ---
 
-## 6. 외부 시스템 연동
+## 7. 외부 시스템 연동
 
-### 6.1 Deal 서비스
-파트너의 상품 정보 조회
+### 7.1 Deal 서비스
+파트너의 상품 정보 조회 및 동기화
 
 ```
 [ad-dsp] ──HTTP──▶ [Deal Service]
                       │
                       ▼
               상품 목록/상세 조회
+              (dealId, name, category1~3)
 ```
 
 ---
 
-## 7. 데이터 흐름
+## 8. 데이터 흐름
 
-### 7.1 광고 등록 흐름
+### 8.1 광고 등록 흐름
 
 ```
 Partner ──▶ API ──▶ Deal 서비스에서 상품 조회
                          │
                          ▼
-                    광고로 등록 (Campaign/AdGroup/Ad)
+                    Deal 테이블에 동기화
                          │
                          ▼
-                    키워드/카테고리 연결
+                    광고그룹 생성 (예산, 기간 설정)
+                         │
+                         ▼
+                    AdKeyword 등록 (상품-키워드 연결, 입찰가)
 ```
 
-### 7.2 광고 서빙 흐름
+### 8.2 광고 서빙 흐름
 
 ```
-User Request ──▶ Serving API
-                     │
-                     ▼
-              키워드/카테고리 매칭
-                     │
-                     ▼
-              후보 광고 필터링 (예산, 상태, 품절 등)
-                     │
-                     ▼
-              옥션 (입찰가 × 품질점수)
-                     │
-                     ▼
-              광고 응답 + 노출 추적
+User Request (키워드 검색)
+         │
+         ▼
+    Serving API
+         │
+         ▼
+    Keyword 매칭 → AdKeyword 조회
+         │
+         ▼
+    필터링 (예산 소진, 상태, 품절 등)
+         │
+         ▼
+    옥션 (bidAmount 기반)
+         │
+         ▼
+    광고 응답 + 노출 추적
+```
+
+### 8.3 카테고리 광고 노출
+
+```
+User Request (카테고리 진입)
+         │
+         ▼
+    Deal.category1~3 매칭
+         │
+         ▼
+    해당 상품의 AdKeyword 조회
+         │
+         ▼
+    옥션 → 광고 응답
 ```
 
 ---
 
-## 8. 배포 구조
+## 9. 배포 구조
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -296,11 +377,9 @@ User Request ──▶ Serving API
 
 ---
 
-## 9. 리팩토링 계획
+## 10. 리팩토링 계획
 
-현재 단일 모듈 구조에서 멀티모듈로 전환
-
-### Phase 1: 기반 구조
+### Phase 1: 기반 구조 ✅
 1. 멀티모듈 Gradle 설정
 2. common 모듈 생성
 3. domain 모듈 생성
@@ -309,27 +388,28 @@ User Request ──▶ Serving API
 4. infra 모듈 생성
 5. JPA Repository 구현체 이동
 6. Deal 서비스 클라이언트 구현
+7. 환경별 설정 파일 구성 (local, dev, prod)
 
 ### Phase 3: API 분리
-7. api 모듈 생성 (파트너용)
-8. serving 모듈 생성 (광고 서빙용)
+8. api 모듈 생성 (파트너용)
+9. serving 모듈 생성 (광고 서빙용)
 
 ### Phase 4: 확장
-9. admin 모듈 생성
-10. batch 모듈 생성
+10. admin 모듈 생성
+11. batch 모듈 생성
 
 ---
 
-## 10. 패키지 네이밍 규칙
+## 11. 패키지 네이밍 규칙
 
 ```
 com.addsp.{module}.{layer}.{domain}
 
 예시:
 - com.addsp.common.exception
-- com.addsp.domain.campaign.entity
-- com.addsp.domain.campaign.service
-- com.addsp.infra.persistence.campaign
-- com.addsp.api.controller.campaign
+- com.addsp.domain.adgroup.entity
+- com.addsp.domain.keyword.service
+- com.addsp.infra.persistence.deal
+- com.addsp.api.controller.adgroup
 - com.addsp.serving.service
 ```
