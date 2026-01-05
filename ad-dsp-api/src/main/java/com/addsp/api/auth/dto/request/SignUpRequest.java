@@ -1,0 +1,31 @@
+package com.addsp.api.auth.dto.request;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+/**
+ * Partner registration request.
+ */
+public record SignUpRequest(
+        @NotBlank(message = "이메일은 필수입니다.")
+        @Email(message = "유효한 이메일 형식이 아닙니다.")
+        String email,
+
+        @NotBlank(message = "비밀번호는 필수입니다.")
+        @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
+        String password,
+
+        @NotBlank(message = "사업자명은 필수입니다.")
+        String businessName,
+
+        @NotBlank(message = "사업자등록번호는 필수입니다.")
+        String businessNumber,
+
+        @NotBlank(message = "담당자명은 필수입니다.")
+        String contactName,
+
+        @NotBlank(message = "담당자 연락처는 필수입니다.")
+        String contactPhone
+) {
+}

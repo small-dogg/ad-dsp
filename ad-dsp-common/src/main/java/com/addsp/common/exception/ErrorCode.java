@@ -34,7 +34,14 @@ public enum ErrorCode {
 
     // Billing
     INSUFFICIENT_BALANCE(400, "B001", "잔액이 부족합니다."),
-    INVALID_CHARGE_AMOUNT(400, "B002", "유효하지 않은 충전 금액입니다.");
+    INVALID_CHARGE_AMOUNT(400, "B002", "유효하지 않은 충전 금액입니다."),
+
+    // Authentication
+    INVALID_CREDENTIALS(401, "A001", "이메일 또는 비밀번호가 올바르지 않습니다."),
+    INVALID_TOKEN(401, "A002", "유효하지 않은 토큰입니다."),
+    EXPIRED_TOKEN(401, "A003", "만료된 토큰입니다."),
+    INVALID_REFRESH_TOKEN(401, "A004", "유효하지 않은 리프레시 토큰입니다."),
+    BUSINESS_NUMBER_ALREADY_EXISTS(409, "P004", "이미 등록된 사업자등록번호입니다.");
 
     private final int status;
     private final String code;
