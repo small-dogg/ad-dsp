@@ -36,3 +36,8 @@ jwt:
 
 server:
   port: 8080
+
+product-api:
+  base-url: http://jerry.world:31101
+  connect-timeout: 5000
+  read-timeout: 10000

@@ -49,7 +49,7 @@
                     <div class="card-header">
                         <span class="card-title" th:text="#{settings.language}">Language</span>
                     </div>
-                    <p style="color:#6b7280; margin-bottom:20px;" th:text="#{settings.languageDesc}">Select your interface language</p>
+                    <p class="card-description" th:text="#{settings.languageDesc}">Select your interface language</p>
 
                     <div class="language-options">
                         <label class="language-option">
@@ -68,38 +68,11 @@
                         </label>
                     </div>
 
-                    <button class="btn btn-primary" style="margin-top:24px;" onclick="changeLanguage()" th:text="#{settings.apply}">Apply</button>
+                    <button class="btn btn-primary mt-6" onclick="changeLanguage()" th:text="#{settings.apply}">Apply</button>
                 </div>
             </div>
         </main>
     </div>
-
-    <style>
-        .language-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .language-option {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        .language-option input {
-            margin-right: 12px;
-            width: 20px;
-            height: 20px;
-        }
-        .language-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 16px;
-        }
-        .language-flag {
-            font-size: 24px;
-        }
-    </style>
 
     <script>
         const token = localStorage.getItem('accessToken');

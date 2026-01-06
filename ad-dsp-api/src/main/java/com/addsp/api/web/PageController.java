@@ -29,6 +29,11 @@ public class PageController {
         return "ad-groups";
     }
 
+    @GetMapping("/ad-groups/{id}")
+    public String adGroupDetailPage() {
+        return "ad-group-detail";
+    }
+
     @GetMapping("/settings")
     public String settingsPage() {
         return "settings";

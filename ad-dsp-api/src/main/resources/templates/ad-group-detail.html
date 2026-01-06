@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{app.title} + ' - ' + #{adGroupDetail.title}">AD DSP - Ad Group Detail</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 onclick="location.href='/dashboard'" th:text="#{app.title}">AD DSP</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.menu}">Menu</div>
+                    <a href="/dashboard" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span th:text="#{nav.dashboard}">Dashboard</span>
+                    </a>
+                    <a href="/ad-groups" class="nav-item active">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <span th:text="#{nav.adGroups}">Ad Groups</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.settings}">Settings</div>
+                    <a href="/settings" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span th:text="#{nav.settings}">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()" th:text="#{common.logout}">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content p-8">
+            <a href="/ad-groups" class="back-link">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                <span th:text="#{adGroupDetail.backToList}">Back to Ad Groups</span>
+            </a>
+
+            <div class="detail-header">
+                <h2 id="adGroupName">-</h2>
+                <span id="adGroupStatus" class="badge">-</span>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <label th:text="#{adGroups.budgetType}">Budget Type</label>
+                    <span id="infoBudgetType">-</span>
+                </div>
+                <div class="info-item">
+                    <label th:text="#{adGroups.dailyBudget}">Daily Budget</label>
+                    <span id="infoDailyBudget">-</span>
+                </div>
+                <div class="info-item">
+                    <label th:text="#{adGroupDetail.spent}">Spent</label>
+                    <span id="infoSpent">-</span>
+                </div>
+                <div class="info-item">
+                    <label th:text="#{adGroups.schedule}">Schedule</label>
+                    <span id="infoSchedule">-</span>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('products')" th:text="#{adGroupDetail.products}">Products</button>
+                <button class="tab" onclick="showTab('keywords')" th:text="#{adGroupDetail.adKeywords}">Ad Keywords</button>
+            </div>
+
+            <!-- Products Tab -->
+            <div id="productsTab" class="section">
+                <div class="section-header">
+                    <h3 th:text="#{adGroupDetail.registeredProducts}">Registered Products</h3>
+                    <button class="btn btn-primary" onclick="openProductModal()" th:text="#{adGroupDetail.addProduct}">Add Product</button>
+                </div>
+                <div class="card">
+                    <div id="productList" class="product-grid">
+                        <div class="empty-state" th:text="#{common.loading}">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keywords Tab -->
+            <div id="keywordsTab" class="section" style="display:none;">
+                <div class="section-header">
+                    <h3 th:text="#{adGroupDetail.adKeywords}">Ad Keywords</h3>
+                    <button class="btn btn-primary" onclick="openKeywordModal()" th:text="#{adGroupDetail.addKeyword}">Add Keyword</button>
+                </div>
+                <div class="card">
+                    <table class="table keyword-table" id="keywordTable">
+                        <thead>
+                            <tr>
+                                <th th:text="#{adGroupDetail.keyword}">Keyword</th>
+                                <th th:text="#{adGroupDetail.product}">Product</th>
+                                <th th:text="#{adGroupDetail.matchType}">Match Type</th>
+                                <th th:text="#{adGroupDetail.bidAmount}">Bid Amount</th>
+                                <th th:text="#{adGroups.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keywordBody">
+                            <tr><td colspan="5" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal-overlay" id="productModal" style="display:none;">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 th:text="#{adGroupDetail.addProduct}">Add Product</h3>
+                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box">
+                    <input type="text" id="productSearch" th:placeholder="#{adGroupDetail.searchProduct}">
+                    <select id="productSortType">
+                        <option value="ID">ID</option>
+                        <option value="NAME" th:text="#{adGroups.name}">Name</option>
+                        <option value="CREATED_AT" th:text="#{adGroupDetail.createdAt}">Created At</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="searchProducts()" th:text="#{adGroupDetail.search}">Search</button>
+                </div>
+                <div id="availableProducts" class="product-grid">
+                    <div class="empty-state" th:text="#{common.loading}">Loading...</div>
+                </div>
+                <div id="productPagination" class="pagination"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeProductModal()" th:text="#{common.cancel}">Cancel</button>
+                <button class="btn btn-primary" onclick="addSelectedProducts()" th:text="#{adGroupDetail.addSelected}">Add Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Keyword Modal -->
+    <div class="modal-overlay" id="keywordModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="keywordModalTitle" th:text="#{adGroupDetail.addKeyword}">Add Keyword</h3>
+                <button class="modal-close" onclick="closeKeywordModal()">&times;</button>
+            </div>
+            <form id="keywordForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editKeywordId">
+                    <div class="form-group">
+                        <label th:text="#{adGroupDetail.keyword} + ' *'">Keyword *</label>
+                        <input type="text" id="keywordText" required th:placeholder="#{adGroupDetail.enterKeyword}">
+                    </div>
+                    <div class="form-group">
+                        <label th:text="#{adGroupDetail.product} + ' *'">Product *</label>
+                        <select id="keywordProductId" required>
+                            <option value="" th:text="#{adGroupDetail.selectProduct}">Select Product</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label th:text="#{adGroupDetail.matchType} + ' *'">Match Type *</label>
+                            <select id="keywordMatchType" required>
+                                <option value="EXACT" th:text="#{adGroupDetail.matchExact}">Exact</option>
+                                <option value="PHRASE" th:text="#{adGroupDetail.matchPhrase}">Phrase</option>
+                                <option value="BROAD" th:text="#{adGroupDetail.matchBroad}">Broad</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label th:text="#{adGroupDetail.bidAmount} + ' *'">Bid Amount *</label>
+                            <input type="number" id="keywordBidAmount" required min="100" value="1000">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeKeywordModal()" th:text="#{common.cancel}">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="keywordSubmitBtn" th:text="#{common.create}">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const token = localStorage.getItem('accessToken');
+        if (!token) window.location.href = '/login';
+
+        const adGroupId = window.location.pathname.split('/').pop();
+        let currentPage = 0;
+        let selectedProducts = new Set();
+        let registeredProductIds = new Set();
+
+        const i18n = {
+            noProducts: /*[[#{adGroupDetail.noProducts}]]*/ 'No products registered',
+            noKeywords: /*[[#{adGroupDetail.noKeywords}]]*/ 'No keywords registered',
+            addProductFirst: /*[[#{adGroupDetail.addProductFirst}]]*/ 'Add products first',
+            confirmRemove: /*[[#{adGroupDetail.confirmRemove}]]*/ 'Remove this product?',
+            confirmRemoveKeyword: /*[[#{adGroupDetail.confirmRemoveKeyword}]]*/ 'Remove this keyword?',
+            failed: /*[[#{error.failed}]]*/ 'Failed',
+            addKeywordTitle: /*[[#{adGroupDetail.addKeyword}]]*/ 'Add Keyword',
+            editKeywordTitle: /*[[#{adGroupDetail.editKeyword}]]*/ 'Edit Keyword',
+            create: /*[[#{common.create}]]*/ 'Create',
+            save: /*[[#{common.save}]]*/ 'Save',
+            noProductsFound: /*[[#{adGroupDetail.noProductsFound}]]*/ 'No products found'
+        };
+
+        async function api(url, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+
+            const res = await fetch(url, options);
+            if (res.status === 401) {
+                localStorage.clear();
+                window.location.href = '/login';
+                return null;
+            }
+            return res.json();
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'PENDING': 'badge-pending',
+                'ACTIVE': 'badge-active',
+                'STOPPED': 'badge-stopped',
+                'ENDED': 'badge-ended'
+            };
+            return badges[status] || '';
+        }
+
+        function getSchedule(ag) {
+            const days = [];
+            if (ag.mon) days.push('M');
+            if (ag.tue) days.push('T');
+            if (ag.wed) days.push('W');
+            if (ag.thu) days.push('T');
+            if (ag.fri) days.push('F');
+            if (ag.sat) days.push('S');
+            if (ag.sun) days.push('S');
+            return days.join(' ');
+        }
+
+        async function loadAdGroupDetail() {
+            const result = await api(`/api/v1/ad-groups/${adGroupId}`);
+            if (!result || !result.success) {
+                window.location.href = '/ad-groups';
+                return;
+            }
+
+            const ag = result.data;
+            document.getElementById('adGroupName').textContent = ag.name;
+            document.getElementById('adGroupStatus').textContent = ag.status;
+            document.getElementById('adGroupStatus').className = 'badge ' + getStatusBadge(ag.status);
+            document.getElementById('infoBudgetType').textContent = ag.budgetType;
+            document.getElementById('infoDailyBudget').textContent = ag.budgetType === 'UNLIMITED' ? '-' : '₩' + ag.dailyBudget.toLocaleString();
+            document.getElementById('infoSpent').textContent = '₩' + ag.spentAmount.toLocaleString();
+            document.getElementById('infoSchedule').textContent = getSchedule(ag);
+        }
+
+        async function loadProducts() {
+            const result = await api(`/api/v1/ad-groups/${adGroupId}/products`);
+            const container = document.getElementById('productList');
+
+            if (!result || !result.success || result.data.length === 0) {
+                container.innerHTML = `<div class="empty-state"><p>${i18n.noProducts}</p><p>${i18n.addProductFirst}</p></div>`;
+                registeredProductIds = new Set();
+                return;
+            }
+
+            registeredProductIds = new Set(result.data.map(p => p.productId));
+
+            // Load product details from external API
+            const productDetails = await Promise.all(
+                result.data.map(p => api(`/api/v1/products/${p.productId}`).catch(() => null))
+            );
+
+            container.innerHTML = result.data.map((p, idx) => {
+                const detail = productDetails[idx]?.data;
+                return `
+                    <div class="product-card">
+                        <button class="remove-btn" onclick="removeProduct(${p.productId})">&times;</button>
+                        <img src="${detail?.imageUrl || ''}" alt="${detail?.name || 'Product'}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%236b7280%22>No Image</text></svg>'">
+                        <h4>${detail?.name || 'Product #' + p.productId}</h4>
+                        <div class="price">${detail?.price ? '₩' + detail.price.toLocaleString() : '-'}</div>
+                    </div>
+                `;
+            }).join('');
+
+            updateKeywordProductSelect();
+        }
+
+        async function removeProduct(productId) {
+            if (!confirm(i18n.confirmRemove)) return;
+
+            const result = await api(`/api/v1/ad-groups/${adGroupId}/products/${productId}`, 'DELETE');
+            if (result && result.success) {
+                loadProducts();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+            }
+        }
+
+        // Product Modal
+        async function openProductModal() {
+            document.getElementById('productModal').style.display = 'flex';
+            selectedProducts = new Set();
+            currentPage = 0;
+            await loadAvailableProducts();
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+
+        async function loadAvailableProducts() {
+            const search = document.getElementById('productSearch').value;
+            const sortType = document.getElementById('productSortType').value;
+
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: 8,
+                sortType: sortType
+            });
+            if (search) {
+                params.append('searchKeyword', search);
+                params.append('searchType', 'NAME');
+            }
+
+            const result = await api(`/api/v1/products?${params}`);
+            const container = document.getElementById('availableProducts');
+
+            if (!result || !result.success || !result.data.content || result.data.content.length === 0) {
+                container.innerHTML = `<div class="empty-state">${i18n.noProductsFound}</div>`;
+                document.getElementById('productPagination').innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = result.data.content.map(p => `
+                <div class="product-card ${selectedProducts.has(p.id) ? 'selected' : ''} ${registeredProductIds.has(p.id) ? 'registered' : ''}"
+                     onclick="${registeredProductIds.has(p.id) ? '' : `toggleProductSelection(${p.id})`}"
+                     style="${registeredProductIds.has(p.id) ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                    <img src="${p.imageUrl || ''}" alt="${p.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%236b7280%22>No Image</text></svg>'">
+                    <h4>${p.name}</h4>
+                    <div class="price">₩${p.price?.toLocaleString() || '-'}</div>
+                </div>
+            `).join('');
+
+            // Pagination
+            const { totalPages } = result.data;
+            let paginationHtml = '';
+            paginationHtml += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>&lt;</button>`;
+            for (let i = 0; i < totalPages && i < 5; i++) {
+                paginationHtml += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i + 1}</button>`;
+            }
+            paginationHtml += `<button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages - 1 ? 'disabled' : ''}>&gt;</button>`;
+            document.getElementById('productPagination').innerHTML = paginationHtml;
+        }
+
+        function toggleProductSelection(productId) {
+            if (selectedProducts.has(productId)) {
+                selectedProducts.delete(productId);
+            } else {
+                selectedProducts.add(productId);
+            }
+            loadAvailableProducts();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadAvailableProducts();
+        }
+
+        function searchProducts() {
+            currentPage = 0;
+            loadAvailableProducts();
+        }
+
+        async function addSelectedProducts() {
+            if (selectedProducts.size === 0) return;
+
+            const result = await api(`/api/v1/ad-groups/${adGroupId}/products`, 'POST', {
+                productIds: Array.from(selectedProducts)
+            });
+
+            if (result && result.success) {
+                closeProductModal();
+                loadProducts();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+            }
+        }
+
+        // Tabs
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick="showTab('${tab}')"]`).classList.add('active');
+            document.getElementById('productsTab').style.display = tab === 'products' ? 'block' : 'none';
+            document.getElementById('keywordsTab').style.display = tab === 'keywords' ? 'block' : 'none';
+
+            if (tab === 'keywords') {
+                loadKeywords();
+            }
+        }
+
+        // Keywords
+        async function loadKeywords() {
+            // TODO: Implement when ad_keywords API is ready
+            const tbody = document.getElementById('keywordBody');
+            tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>${i18n.noKeywords}</p></div></td></tr>`;
+        }
+
+        function updateKeywordProductSelect() {
+            const select = document.getElementById('keywordProductId');
+            select.innerHTML = '<option value="">Select Product</option>';
+            registeredProductIds.forEach(id => {
+                select.innerHTML += `<option value="${id}">Product #${id}</option>`;
+            });
+        }
+
+        function openKeywordModal() {
+            document.getElementById('keywordModalTitle').textContent = i18n.addKeywordTitle;
+            document.getElementById('keywordSubmitBtn').textContent = i18n.create;
+            document.getElementById('editKeywordId').value = '';
+            document.getElementById('keywordForm').reset();
+            document.getElementById('keywordModal').style.display = 'flex';
+        }
+
+        function closeKeywordModal() {
+            document.getElementById('keywordModal').style.display = 'none';
+        }
+
+        document.getElementById('keywordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // TODO: Implement when ad_keywords API is ready
+            alert('Ad Keywords API not yet implemented');
+            closeKeywordModal();
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        // Init
+        loadAdGroupDetail();
+        loadProducts();
+    </script>
+</body>
+</html>

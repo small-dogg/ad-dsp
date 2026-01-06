@@ -58,11 +58,12 @@
                                 <th th:text="#{adGroups.dailyBudget}">Daily Budget</th>
                                 <th th:text="#{adGroups.schedule}">Schedule</th>
                                 <th th:text="#{adGroups.status}">Status</th>
+                                <th th:text="#{adGroups.products}">Products</th>
                                 <th th:text="#{adGroups.actions}">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="adGroupBody">
-                            <tr><td colspan="6" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
+                            <tr><td colspan="7" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -132,11 +133,13 @@
             save: /*[[#{common.save}]]*/ 'Save',
             edit: /*[[#{common.edit}]]*/ 'Edit',
             delete: /*[[#{common.delete}]]*/ 'Delete',
+            detail: /*[[#{common.detail}]]*/ 'Detail',
             noData: /*[[#{adGroups.noData}]]*/ 'No ad groups',
             createFirst: /*[[#{dashboard.createFirst}]]*/ 'Create your first ad group',
             deleteConfirm: /*[[#{adGroups.deleteConfirm}]]*/ 'Are you sure?',
             deleteOnlyStopped: /*[[#{adGroups.deleteOnlyStopped}]]*/ 'Only STOPPED can be deleted',
-            failed: /*[[#{error.failed}]]*/ 'Failed'
+            failed: /*[[#{error.failed}]]*/ 'Failed',
+            products: /*[[#{adGroups.productsCount}]]*/ '{0} products'
         };
 
         async function api(url, method = 'GET', body = null) {
@@ -185,23 +188,30 @@
             const tbody = document.getElementById('adGroupBody');
 
             if (!result || !result.success || result.data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+                tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
                     <h3>${i18n.noData}</h3>
                     <p>${i18n.createFirst}</p>
                 </div></td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = result.data.map(ag => `
-                <tr>
+            // Load product counts for each ad group
+            const productCounts = await Promise.all(
+                result.data.map(ag => api(`/api/v1/ad-groups/${ag.id}/products`).then(r => r?.data?.length || 0))
+            );
+
+            tbody.innerHTML = result.data.map((ag, idx) => `
+                <tr ondblclick="goToDetail(${ag.id})" style="cursor:pointer;">
                     <td><strong>${ag.name}</strong></td>
                     <td>${ag.budgetType}</td>
                     <td>${ag.budgetType === 'UNLIMITED' ? '-' : '₩' + ag.dailyBudget.toLocaleString()}</td>
                     <td>${getSchedule(ag)}</td>
                     <td>${getStatusBadge(ag.status)}</td>
+                    <td><span class="badge badge-info">${productCounts[idx]}</span></td>
                     <td class="actions">
-                        <button class="btn btn-secondary btn-sm" onclick="editAdGroup(${ag.id})">${i18n.edit}</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteAdGroup(${ag.id}, '${ag.status}')">${i18n.delete}</button>
+                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); goToDetail(${ag.id})">${i18n.detail}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); editAdGroup(${ag.id})">${i18n.edit}</button>
+                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteAdGroup(${ag.id}, '${ag.status}')">${i18n.delete}</button>
                     </td>
                 </tr>
             `).join('');
@@ -305,6 +315,10 @@
         function logout() {
             localStorage.clear();
             window.location.href = '/login';
+        }
+
+        function goToDetail(id) {
+            window.location.href = `/ad-groups/${id}`;
         }
 
         loadAdGroups();
