@@ -33,7 +33,7 @@ public class ProductApiClient {
                                                String searchKeyword, String searchType, String sortType) {
         try {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
-                    .path("/products")
+                    .path("/api/v1/products")
                     .queryParam("page", page)
                     .queryParam("limit", limit)
                     .queryParam("partnerId", partnerId)
@@ -63,7 +63,7 @@ public class ProductApiClient {
     public ProductApiResponse getProduct(Long productId) {
         try {
             String url = UriComponentsBuilder.fromUriString(baseUrl)
-                    .path("/products/{productId}")
+                    .path("/api/v1/products/{productId}")
                     .buildAndExpand(productId)
                     .toUriString();
 

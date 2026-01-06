@@ -38,6 +38,6 @@ server:
   port: 8080
 
 product-api:
-  base-url: http://jerry.world:31101
+  base-url: http://jerry.world:8081
   connect-timeout: 5000
   read-timeout: 10000

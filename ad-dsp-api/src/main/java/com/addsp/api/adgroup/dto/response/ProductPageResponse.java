@@ -10,24 +10,22 @@ import java.util.List;
 public record ProductPageResponse(
         List<ProductResponse> content,
         int page,
-        int size,
+        int limit,
         long totalElements,
         int totalPages,
-        boolean first,
-        boolean last
+        boolean hasNext
 ) {
     public static ProductPageResponse from(ProductPageApiResponse apiResponse) {
-        List<ProductResponse> content = apiResponse.content().stream()
+        List<ProductResponse> content = apiResponse.items().stream()
                 .map(ProductResponse::from)
                 .toList();
         return new ProductPageResponse(
                 content,
-                apiResponse.page(),
-                apiResponse.size(),
-                apiResponse.totalElements(),
-                apiResponse.totalPages(),
-                apiResponse.first(),
-                apiResponse.last()
+                apiResponse.page().page(),
+                apiResponse.page().limit(),
+                apiResponse.page().totalElements(),
+                apiResponse.page().totalPages(),
+                apiResponse.page().hasNext()
         );
     }
 }

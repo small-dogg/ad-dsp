@@ -9,10 +9,11 @@ import java.time.LocalDateTime;
 public record ProductApiResponse(
         Long id,
         String name,
-        BigDecimal price,
+        Long price,
         String imageUrl,
         Long partnerId,
         LocalDateTime createdAt,
         LocalDateTime modifiedAt
 ) {
 }
+
