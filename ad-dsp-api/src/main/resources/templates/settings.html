@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{app.title} + ' - ' + #{settings.title}">AD DSP - Settings</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 onclick="location.href='/dashboard'" th:text="#{app.title}">AD DSP</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.menu}">Menu</div>
+                    <a href="/dashboard" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span th:text="#{nav.dashboard}">Dashboard</span>
+                    </a>
+                    <a href="/ad-groups" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <span th:text="#{nav.adGroups}">Ad Groups</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.settings}">Settings</div>
+                    <a href="/settings" class="nav-item active">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span th:text="#{nav.settings}">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()" th:text="#{common.logout}">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h2 th:text="#{settings.title}">Settings</h2>
+            </div>
+
+            <div class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title" th:text="#{settings.language}">Language</span>
+                    </div>
+                    <p style="color:#6b7280; margin-bottom:20px;" th:text="#{settings.languageDesc}">Select your interface language</p>
+
+                    <div class="language-options">
+                        <label class="language-option">
+                            <input type="radio" name="language" value="ko" th:checked="${#locale.language == 'ko'}">
+                            <span class="language-label">
+                                <span class="language-flag">🇰🇷</span>
+                                <span th:text="#{settings.korean}">한국어</span>
+                            </span>
+                        </label>
+                        <label class="language-option">
+                            <input type="radio" name="language" value="en" th:checked="${#locale.language == 'en'}">
+                            <span class="language-label">
+                                <span class="language-flag">🇺🇸</span>
+                                <span th:text="#{settings.english}">English</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top:24px;" onclick="changeLanguage()" th:text="#{settings.apply}">Apply</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .language-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .language-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .language-option input {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+        }
+        .language-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+        .language-flag {
+            font-size: 24px;
+        }
+    </style>
+
+    <script>
+        const token = localStorage.getItem('accessToken');
+        if (!token) window.location.href = '/login';
+
+        function changeLanguage() {
+            const lang = document.querySelector('input[name="language"]:checked').value;
+            window.location.href = window.location.pathname + '?lang=' + lang;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>

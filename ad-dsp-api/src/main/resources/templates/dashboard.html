@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{app.title} + ' - ' + #{dashboard.title}">AD DSP - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 onclick="location.href='/dashboard'" th:text="#{app.title}">AD DSP</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.menu}">Menu</div>
+                    <a href="/dashboard" class="nav-item active">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span th:text="#{nav.dashboard}">Dashboard</span>
+                    </a>
+                    <a href="/ad-groups" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <span th:text="#{nav.adGroups}">Ad Groups</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.settings}">Settings</div>
+                    <a href="/settings" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span th:text="#{nav.settings}">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()" th:text="#{common.logout}">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h2 th:text="#{dashboard.title}">Dashboard</h2>
+            </div>
+
+            <div class="page-content">
+                <!-- Welcome -->
+                <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;">
+                    <h3 style="margin-bottom: 8px;" th:text="#{dashboard.welcome}">Welcome to AD DSP</h3>
+                    <p style="opacity: 0.9;" th:text="#{dashboard.welcomeDesc}">광고 캠페인을 관리하고 성과를 확인하세요.</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 th:text="#{dashboard.adGroups}">Ad Groups</h3>
+                        <div class="value" id="adGroupCount">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 th:text="#{dashboard.activeAds}">Active Ads</h3>
+                        <div class="value" id="activeAds">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 th:text="#{dashboard.todaySpent}">Today Spent</h3>
+                        <div class="value" id="todaySpent">₩0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 th:text="#{dashboard.balance}">Balance</h3>
+                        <div class="value" id="balance">₩0</div>
+                    </div>
+                </div>
+
+                <!-- Recent Ad Groups -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title" th:text="#{dashboard.recentAdGroups}">Recent Ad Groups</span>
+                        <a href="/ad-groups" class="btn btn-secondary btn-sm" th:text="#{common.viewAll}">View All</a>
+                    </div>
+                    <div id="adGroupList"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script th:inline="javascript">
+        const token = localStorage.getItem('accessToken');
+        if (!token) window.location.href = '/login';
+
+        const i18n = {
+            noAdGroups: /*[[#{dashboard.noAdGroups}]]*/ 'No ad groups yet',
+            createFirst: /*[[#{dashboard.createFirst}]]*/ 'Create your first ad group',
+            createAdGroup: /*[[#{dashboard.createAdGroup}]]*/ 'Create Ad Group',
+            name: /*[[#{adGroups.name}]]*/ 'Name',
+            budget: /*[[#{adGroups.budget}]]*/ 'Budget',
+            status: /*[[#{adGroups.status}]]*/ 'Status',
+            unlimited: /*[[#{adGroups.unlimited}]]*/ 'Unlimited',
+            loadFailed: /*[[#{error.loadFailed}]]*/ 'Failed to load data'
+        };
+
+        async function fetchWithAuth(url) {
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 401) {
+                localStorage.clear();
+                window.location.href = '/login';
+                return null;
+            }
+            return res.json();
+        }
+
+        async function loadDashboard() {
+            const result = await fetchWithAuth('/api/v1/ad-groups');
+            if (!result || !result.success) {
+                document.getElementById('adGroupList').innerHTML = '<div class="empty-state">' + i18n.loadFailed + '</div>';
+                return;
+            }
+
+            const adGroups = result.data;
+            document.getElementById('adGroupCount').textContent = adGroups.length;
+            document.getElementById('activeAds').textContent = adGroups.filter(ag => ag.status === 'ACTIVE').length;
+
+            if (adGroups.length === 0) {
+                document.getElementById('adGroupList').innerHTML = `
+                    <div class="empty-state">
+                        <h3>${i18n.noAdGroups}</h3>
+                        <p>${i18n.createFirst}</p>
+                        <a href="/ad-groups" class="btn btn-primary" style="margin-top:16px;">${i18n.createAdGroup}</a>
+                    </div>`;
+            } else {
+                document.getElementById('adGroupList').innerHTML = `
+                    <table class="table">
+                        <thead>
+                            <tr><th>${i18n.name}</th><th>${i18n.budget}</th><th>${i18n.status}</th></tr>
+                        </thead>
+                        <tbody>
+                            ${adGroups.slice(0, 5).map(ag => `
+                                <tr>
+                                    <td><strong>${ag.name}</strong></td>
+                                    <td>${ag.budgetType === 'UNLIMITED' ? i18n.unlimited : '₩' + ag.dailyBudget.toLocaleString() + '/day'}</td>
+                                    <td><span class="badge badge-${ag.status.toLowerCase()}">${ag.status}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`;
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

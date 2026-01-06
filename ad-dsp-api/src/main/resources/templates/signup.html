@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{app.title} + ' - ' + #{signup.title}">AD DSP - Sign Up</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <style>
+        .login-box { max-width: 480px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="login-container" style="max-width: 520px;">
+        <div class="login-box">
+            <div class="login-header">
+                <h1 th:text="#{app.title}">AD DSP</h1>
+                <p th:text="#{signup.subtitle}">새 계정을 만들어 광고를 시작하세요</p>
+            </div>
+
+            <div id="alertBox" class="alert" style="display: none;"></div>
+
+            <form id="signupForm" class="login-form">
+                <div class="form-group">
+                    <label for="email" th:text="#{login.email}">이메일 *</label>
+                    <input type="email" id="email" name="email" th:placeholder="#{login.emailPlaceholder}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" th:text="#{login.password}">비밀번호 *</label>
+                    <input type="password" id="password" name="password" th:placeholder="#{login.passwordPlaceholder}" minlength="8" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="businessName" th:text="#{signup.businessName}">사업자명 *</label>
+                    <input type="text" id="businessName" name="businessName" th:placeholder="#{signup.businessNamePlaceholder}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="businessNumber" th:text="#{signup.businessNumber}">사업자등록번호 *</label>
+                    <input type="text" id="businessNumber" name="businessNumber" th:placeholder="#{signup.businessNumberPlaceholder}" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactName" th:text="#{signup.contactName}">담당자명 *</label>
+                        <input type="text" id="contactName" name="contactName" th:placeholder="#{signup.contactNamePlaceholder}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactPhone" th:text="#{signup.contactPhone}">연락처 *</label>
+                        <input type="tel" id="contactPhone" name="contactPhone" th:placeholder="#{signup.contactPhonePlaceholder}" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" th:text="#{signup.submit}">회원가입</button>
+            </form>
+
+            <div class="login-footer">
+                <p><span th:text="#{signup.hasAccount}">이미 계정이 있으신가요?</span> <a th:href="@{/login}" th:text="#{login.title}">로그인</a></p>
+            </div>
+
+            <div style="text-align:center; margin-top:16px;">
+                <a th:href="@{/signup(lang='ko')}" style="margin-right:8px;">🇰🇷 한국어</a>
+                <a th:href="@{/signup(lang='en')}">🇺🇸 English</a>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const successMsg = /*[[#{signup.success}]]*/ '회원가입이 완료되었습니다.';
+        const errorMsg = /*[[#{error.server}]]*/ '서버 오류가 발생했습니다.';
+        const failedMsg = /*[[#{error.failed}]]*/ '회원가입에 실패했습니다.';
+
+        function showAlert(message, isError) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = isError ? 'alert alert-error' : 'alert alert-success';
+            alertBox.style.display = 'block';
+        }
+
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                businessName: document.getElementById('businessName').value,
+                businessNumber: document.getElementById('businessNumber').value,
+                contactName: document.getElementById('contactName').value,
+                contactPhone: document.getElementById('contactPhone').value
+            };
+
+            try {
+                const response = await fetch('/api/v1/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(successMsg, false);
+                    setTimeout(() => { window.location.href = '/login'; }, 1500);
+                } else {
+                    showAlert(result.error?.message || failedMsg, true);
+                }
+            } catch (error) {
+                showAlert(errorMsg, true);
+            }
+        });
+    </script>
+</body>
+</html>

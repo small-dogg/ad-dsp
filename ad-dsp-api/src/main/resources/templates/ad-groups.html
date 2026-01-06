@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{app.title} + ' - ' + #{adGroups.title}">AD DSP - Ad Groups</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 onclick="location.href='/dashboard'" th:text="#{app.title}">AD DSP</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.menu}">Menu</div>
+                    <a href="/dashboard" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span th:text="#{nav.dashboard}">Dashboard</span>
+                    </a>
+                    <a href="/ad-groups" class="nav-item active">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <span th:text="#{nav.adGroups}">Ad Groups</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" th:text="#{nav.settings}">Settings</div>
+                    <a href="/settings" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span th:text="#{nav.settings}">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()" th:text="#{common.logout}">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h2 th:text="#{adGroups.title}">Ad Groups</h2>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span th:text="#{adGroups.new}">New Ad Group</span>
+                </button>
+            </div>
+
+            <div class="page-content">
+                <div class="card">
+                    <table class="table" id="adGroupTable">
+                        <thead>
+                            <tr>
+                                <th th:text="#{adGroups.name}">Name</th>
+                                <th th:text="#{adGroups.budgetType}">Budget Type</th>
+                                <th th:text="#{adGroups.dailyBudget}">Daily Budget</th>
+                                <th th:text="#{adGroups.schedule}">Schedule</th>
+                                <th th:text="#{adGroups.status}">Status</th>
+                                <th th:text="#{adGroups.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adGroupBody">
+                            <tr><td colspan="6" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal-overlay" id="modal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle" th:text="#{adGroups.createTitle}">New Ad Group</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="adGroupForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editId">
+
+                    <div class="form-group">
+                        <label th:text="#{adGroups.name} + ' *'">Name *</label>
+                        <input type="text" id="name" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label th:text="#{adGroups.budgetType} + ' *'">Budget Type *</label>
+                            <select id="budgetType" onchange="toggleBudget()">
+                                <option value="LIMITED" th:text="#{adGroups.limited}">Limited</option>
+                                <option value="UNLIMITED" th:text="#{adGroups.unlimited}">Unlimited</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="budgetGroup">
+                            <label th:text="#{adGroups.budgetMin}">Daily Budget (min 10,000)</label>
+                            <input type="number" id="dailyBudget" min="10000" value="99000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label th:text="#{adGroups.scheduleDays}">Schedule (Days)</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" id="mon" checked> <span th:text="#{days.mon}">Mon</span></label>
+                            <label class="checkbox-item"><input type="checkbox" id="tue" checked> <span th:text="#{days.tue}">Tue</span></label>
+                            <label class="checkbox-item"><input type="checkbox" id="wed" checked> <span th:text="#{days.wed}">Wed</span></label>
+                            <label class="checkbox-item"><input type="checkbox" id="thu" checked> <span th:text="#{days.thu}">Thu</span></label>
+                            <label class="checkbox-item"><input type="checkbox" id="fri" checked> <span th:text="#{days.fri}">Fri</span></label>
+                            <label class="checkbox-item"><input type="checkbox" id="sat" checked> <span th:text="#{days.sat}">Sat</span></label>
+                            <label class="checkbox-item"><input type="checkbox" id="sun" checked> <span th:text="#{days.sun}">Sun</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()" th:text="#{common.cancel}">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" th:text="#{common.create}">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const token = localStorage.getItem('accessToken');
+        if (!token) window.location.href = '/login';
+
+        const i18n = {
+            createTitle: /*[[#{adGroups.createTitle}]]*/ 'New Ad Group',
+            editTitle: /*[[#{adGroups.editTitle}]]*/ 'Edit Ad Group',
+            create: /*[[#{common.create}]]*/ 'Create',
+            save: /*[[#{common.save}]]*/ 'Save',
+            edit: /*[[#{common.edit}]]*/ 'Edit',
+            delete: /*[[#{common.delete}]]*/ 'Delete',
+            noData: /*[[#{adGroups.noData}]]*/ 'No ad groups',
+            createFirst: /*[[#{dashboard.createFirst}]]*/ 'Create your first ad group',
+            deleteConfirm: /*[[#{adGroups.deleteConfirm}]]*/ 'Are you sure?',
+            deleteOnlyStopped: /*[[#{adGroups.deleteOnlyStopped}]]*/ 'Only STOPPED can be deleted',
+            failed: /*[[#{error.failed}]]*/ 'Failed'
+        };
+
+        async function api(url, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+
+            const res = await fetch(url, options);
+            if (res.status === 401) {
+                localStorage.clear();
+                window.location.href = '/login';
+                return null;
+            }
+            return res.json();
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'PENDING': 'badge-pending',
+                'ACTIVE': 'badge-active',
+                'STOPPED': 'badge-stopped',
+                'ENDED': 'badge-ended'
+            };
+            return `<span class="badge ${badges[status] || ''}">${status}</span>`;
+        }
+
+        function getSchedule(ag) {
+            const days = [];
+            if (ag.mon) days.push('M');
+            if (ag.tue) days.push('T');
+            if (ag.wed) days.push('W');
+            if (ag.thu) days.push('T');
+            if (ag.fri) days.push('F');
+            if (ag.sat) days.push('S');
+            if (ag.sun) days.push('S');
+            return days.join(' ');
+        }
+
+        async function loadAdGroups() {
+            const result = await api('/api/v1/ad-groups');
+            const tbody = document.getElementById('adGroupBody');
+
+            if (!result || !result.success || result.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+                    <h3>${i18n.noData}</h3>
+                    <p>${i18n.createFirst}</p>
+                </div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = result.data.map(ag => `
+                <tr>
+                    <td><strong>${ag.name}</strong></td>
+                    <td>${ag.budgetType}</td>
+                    <td>${ag.budgetType === 'UNLIMITED' ? '-' : '₩' + ag.dailyBudget.toLocaleString()}</td>
+                    <td>${getSchedule(ag)}</td>
+                    <td>${getStatusBadge(ag.status)}</td>
+                    <td class="actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editAdGroup(${ag.id})">${i18n.edit}</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteAdGroup(${ag.id}, '${ag.status}')">${i18n.delete}</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleBudget() {
+            const type = document.getElementById('budgetType').value;
+            document.getElementById('budgetGroup').style.display = type === 'UNLIMITED' ? 'none' : 'block';
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = i18n.createTitle;
+            document.getElementById('submitBtn').textContent = i18n.create;
+            document.getElementById('editId').value = '';
+            document.getElementById('adGroupForm').reset();
+            document.getElementById('budgetGroup').style.display = 'block';
+            ['mon','tue','wed','thu','fri','sat','sun'].forEach(d => document.getElementById(d).checked = true);
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        async function editAdGroup(id) {
+            const result = await api(`/api/v1/ad-groups/${id}`);
+            if (!result || !result.success) return;
+
+            const ag = result.data;
+            document.getElementById('modalTitle').textContent = i18n.editTitle;
+            document.getElementById('submitBtn').textContent = i18n.save;
+            document.getElementById('editId').value = id;
+            document.getElementById('name').value = ag.name;
+            document.getElementById('budgetType').value = ag.budgetType;
+            document.getElementById('dailyBudget').value = ag.dailyBudget;
+            document.getElementById('mon').checked = ag.mon;
+            document.getElementById('tue').checked = ag.tue;
+            document.getElementById('wed').checked = ag.wed;
+            document.getElementById('thu').checked = ag.thu;
+            document.getElementById('fri').checked = ag.fri;
+            document.getElementById('sat').checked = ag.sat;
+            document.getElementById('sun').checked = ag.sun;
+            toggleBudget();
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        async function deleteAdGroup(id, status) {
+            if (status !== 'STOPPED') {
+                alert(i18n.deleteOnlyStopped);
+                return;
+            }
+            if (!confirm(i18n.deleteConfirm)) return;
+
+            const result = await api(`/api/v1/ad-groups/${id}`, 'DELETE');
+            if (result && result.success) {
+                loadAdGroups();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        document.getElementById('adGroupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const editId = document.getElementById('editId').value;
+            const budgetType = document.getElementById('budgetType').value;
+
+            const data = {
+                name: document.getElementById('name').value,
+                budgetType,
+                dailyBudget: budgetType === 'UNLIMITED' ? 0 : parseInt(document.getElementById('dailyBudget').value),
+                mon: document.getElementById('mon').checked,
+                tue: document.getElementById('tue').checked,
+                wed: document.getElementById('wed').checked,
+                thu: document.getElementById('thu').checked,
+                fri: document.getElementById('fri').checked,
+                sat: document.getElementById('sat').checked,
+                sun: document.getElementById('sun').checked
+            };
+
+            let result;
+            if (editId) {
+                await api(`/api/v1/ad-groups/${editId}/name`, 'PATCH', { name: data.name });
+                await api(`/api/v1/ad-groups/${editId}/budget`, 'PATCH', { budgetType: data.budgetType, dailyBudget: data.dailyBudget });
+                result = await api(`/api/v1/ad-groups/${editId}/schedule`, 'PATCH', {
+                    mon: data.mon, tue: data.tue, wed: data.wed, thu: data.thu,
+                    fri: data.fri, sat: data.sat, sun: data.sun
+                });
+            } else {
+                result = await api('/api/v1/ad-groups', 'POST', data);
+            }
+
+            if (result && result.success) {
+                closeModal();
+                loadAdGroups();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        loadAdGroups();
+    </script>
+</body>
+</html>

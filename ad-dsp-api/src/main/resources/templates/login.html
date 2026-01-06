@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{app.title} + ' - ' + #{login.title}">AD DSP - Login</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1 th:text="#{app.title}">AD DSP</h1>
+                <p th:text="#{login.subtitle}">광고 플랫폼에 로그인하세요</p>
+            </div>
+
+            <div class="alert alert-error" th:if="${param.error}">
+                <span th:text="#{login.error}">이메일 또는 비밀번호가 올바르지 않습니다.</span>
+            </div>
+
+            <div class="alert alert-success" th:if="${param.logout}">
+                <span th:text="#{login.loggedOut}">로그아웃되었습니다.</span>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email" th:text="#{login.email}">이메일</label>
+                    <input type="email" id="email" name="email" th:placeholder="#{login.emailPlaceholder}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" th:text="#{login.password}">비밀번호</label>
+                    <input type="password" id="password" name="password" th:placeholder="#{login.passwordPlaceholder}" required>
+                </div>
+
+                <button type="submit" class="btn-login" th:text="#{login.submit}">로그인</button>
+            </form>
+
+            <div class="login-footer">
+                <p><span th:text="#{login.noAccount}">계정이 없으신가요?</span> <a th:href="@{/signup}" th:text="#{login.signup}">회원가입</a></p>
+            </div>
+
+            <div style="text-align:center; margin-top:16px;">
+                <a th:href="@{/login(lang='ko')}" style="margin-right:8px;">🇰🇷 한국어</a>
+                <a th:href="@{/login(lang='en')}">🇺🇸 English</a>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const errorMsg = /*[[#{error.server}]]*/ '서버 오류가 발생했습니다.';
+        const loginErrorMsg = /*[[#{login.error}]]*/ '로그인에 실패했습니다.';
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/v1/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('accessToken', result.data.accessToken);
+                    localStorage.setItem('refreshToken', result.data.refreshToken);
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(result.error?.message || loginErrorMsg);
+                }
+            } catch (error) {
+                alert(errorMsg);
+            }
+        });
+    </script>
+</body>
+</html>
