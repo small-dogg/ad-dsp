@@ -99,7 +99,7 @@
                             <tr>
                                 <th th:text="#{adGroupDetail.keyword}">Keyword</th>
                                 <th th:text="#{adGroupDetail.product}">Product</th>
-                                <th th:text="#{adGroupDetail.matchType}">Match Type</th>
+                                <th th:text="#{adGroups.status}">Status</th>
                                 <th th:text="#{adGroupDetail.bidAmount}">Bid Amount</th>
                                 <th th:text="#{adGroups.actions}">Actions</th>
                             </tr>
@@ -162,19 +162,9 @@
                             <option value="" th:text="#{adGroupDetail.selectProduct}">Select Product</option>
                         </select>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label th:text="#{adGroupDetail.matchType} + ' *'">Match Type *</label>
-                            <select id="keywordMatchType" required>
-                                <option value="EXACT" th:text="#{adGroupDetail.matchExact}">Exact</option>
-                                <option value="PHRASE" th:text="#{adGroupDetail.matchPhrase}">Phrase</option>
-                                <option value="BROAD" th:text="#{adGroupDetail.matchBroad}">Broad</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label th:text="#{adGroupDetail.bidAmount} + ' *'">Bid Amount *</label>
-                            <input type="number" id="keywordBidAmount" required min="100" value="1000">
-                        </div>
+                    <div class="form-group">
+                        <label th:text="#{adGroupDetail.bidAmount} + ' * (150 ~ 99,000)'">Bid Amount * (150 ~ 99,000)</label>
+                        <input type="number" id="keywordBidAmount" required min="150" max="99000" value="1000">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -205,8 +195,15 @@
             editKeywordTitle: /*[[#{adGroupDetail.editKeyword}]]*/ 'Edit Keyword',
             create: /*[[#{common.create}]]*/ 'Create',
             save: /*[[#{common.save}]]*/ 'Save',
-            noProductsFound: /*[[#{adGroupDetail.noProductsFound}]]*/ 'No products found'
+            noProductsFound: /*[[#{adGroupDetail.noProductsFound}]]*/ 'No products found',
+            statusPending: /*[[#{keywordStatus.pending}]]*/ 'Pending',
+            statusApproved: /*[[#{keywordStatus.approved}]]*/ 'Approved',
+            statusRejected: /*[[#{keywordStatus.rejected}]]*/ 'Rejected',
+            statusInactive: /*[[#{keywordStatus.inactive}]]*/ 'Inactive'
         };
+
+        // Product name cache
+        let productNameCache = {};
 
         async function api(url, method = 'GET', body = null) {
             const options = {
@@ -282,6 +279,14 @@
             const productDetails = await Promise.all(
                 result.data.map(p => api(`/api/v1/products/${p.productId}`).catch(() => null))
             );
+
+            // Cache product names for keyword select
+            result.data.forEach((p, idx) => {
+                const detail = productDetails[idx]?.data;
+                if (detail) {
+                    productNameCache[p.productId] = detail.name;
+                }
+            });
 
             container.innerHTML = result.data.map((p, idx) => {
                 const detail = productDetails[idx]?.data;
@@ -412,25 +417,99 @@
         }
 
         // Keywords
+        function getKeywordStatusBadge(status) {
+            const badges = {
+                'PENDING': 'badge-pending',
+                'APPROVED': 'badge-active',
+                'REJECTED': 'badge-stopped',
+                'INACTIVE': 'badge-ended'
+            };
+            return badges[status] || '';
+        }
+
+        function getKeywordStatusText(status) {
+            const texts = {
+                'PENDING': i18n.statusPending,
+                'APPROVED': i18n.statusApproved,
+                'REJECTED': i18n.statusRejected,
+                'INACTIVE': i18n.statusInactive
+            };
+            return texts[status] || status;
+        }
+
         async function loadKeywords() {
-            // TODO: Implement when ad_keywords API is ready
+            const result = await api(`/api/v1/ad-groups/${adGroupId}/keywords`);
             const tbody = document.getElementById('keywordBody');
-            tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>${i18n.noKeywords}</p></div></td></tr>`;
+
+            if (!result || !result.success || result.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>${i18n.noKeywords}</p></div></td></tr>`;
+                return;
+            }
+
+            // Get product names
+            const uniqueDealIds = [...new Set(result.data.map(k => k.dealId))];
+            await Promise.all(uniqueDealIds.map(async (dealId) => {
+                if (!productNameCache[dealId]) {
+                    try {
+                        const prodResult = await api(`/api/v1/products/${dealId}`);
+                        if (prodResult && prodResult.success) {
+                            productNameCache[dealId] = prodResult.data.name;
+                        }
+                    } catch (e) {
+                        productNameCache[dealId] = `Product #${dealId}`;
+                    }
+                }
+            }));
+
+            tbody.innerHTML = result.data.map(k => `
+                <tr>
+                    <td>${k.keyword}</td>
+                    <td>${productNameCache[k.dealId] || 'Product #' + k.dealId}</td>
+                    <td><span class="badge ${getKeywordStatusBadge(k.status)}">${getKeywordStatusText(k.status)}</span></td>
+                    <td>₩${k.bidAmount.toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="openEditKeywordModal(${k.id}, ${k.dealId}, '${k.keyword}', ${k.bidAmount})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteKeyword(${k.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function updateKeywordProductSelect() {
             const select = document.getElementById('keywordProductId');
             select.innerHTML = '<option value="">Select Product</option>';
             registeredProductIds.forEach(id => {
-                select.innerHTML += `<option value="${id}">Product #${id}</option>`;
+                const name = productNameCache[id] || 'Product #' + id;
+                select.innerHTML += `<option value="${id}">${name}</option>`;
             });
         }
 
         function openKeywordModal() {
+            if (registeredProductIds.size === 0) {
+                alert(i18n.addProductFirst);
+                return;
+            }
             document.getElementById('keywordModalTitle').textContent = i18n.addKeywordTitle;
             document.getElementById('keywordSubmitBtn').textContent = i18n.create;
             document.getElementById('editKeywordId').value = '';
             document.getElementById('keywordForm').reset();
+            document.getElementById('keywordText').disabled = false;
+            document.getElementById('keywordProductId').disabled = false;
+            document.getElementById('keywordBidAmount').value = 1000;
+            updateKeywordProductSelect();
+            document.getElementById('keywordModal').style.display = 'flex';
+        }
+
+        function openEditKeywordModal(id, dealId, keyword, bidAmount) {
+            document.getElementById('keywordModalTitle').textContent = i18n.editKeywordTitle;
+            document.getElementById('keywordSubmitBtn').textContent = i18n.save;
+            document.getElementById('editKeywordId').value = id;
+            document.getElementById('keywordText').value = keyword;
+            document.getElementById('keywordText').disabled = true;
+            updateKeywordProductSelect();
+            document.getElementById('keywordProductId').value = dealId;
+            document.getElementById('keywordProductId').disabled = true;
+            document.getElementById('keywordBidAmount').value = bidAmount;
             document.getElementById('keywordModal').style.display = 'flex';
         }
 
@@ -438,11 +517,43 @@
             document.getElementById('keywordModal').style.display = 'none';
         }
 
+        async function deleteKeyword(keywordId) {
+            if (!confirm(i18n.confirmRemoveKeyword)) return;
+
+            const result = await api(`/api/v1/ad-groups/${adGroupId}/keywords/${keywordId}`, 'DELETE');
+            if (result && result.success) {
+                loadKeywords();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+            }
+        }
+
         document.getElementById('keywordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            // TODO: Implement when ad_keywords API is ready
-            alert('Ad Keywords API not yet implemented');
-            closeKeywordModal();
+            const editId = document.getElementById('editKeywordId').value;
+            const keyword = document.getElementById('keywordText').value;
+            const dealId = document.getElementById('keywordProductId').value;
+            const bidAmount = document.getElementById('keywordBidAmount').value;
+
+            let result;
+            if (editId) {
+                // Update bid amount only
+                result = await api(`/api/v1/ad-groups/${adGroupId}/keywords/${editId}/bid`, 'PATCH', { bidAmount: parseInt(bidAmount) });
+            } else {
+                // Create new keyword
+                result = await api(`/api/v1/ad-groups/${adGroupId}/keywords`, 'POST', {
+                    dealId: parseInt(dealId),
+                    keyword: keyword,
+                    bidAmount: parseInt(bidAmount)
+                });
+            }
+
+            if (result && result.success) {
+                closeKeywordModal();
+                loadKeywords();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+            }
         });
 
         function logout() {

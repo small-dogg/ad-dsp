@@ -1,6 +1,6 @@
 package com.addsp.domain.keyword.entity;
 
-import com.addsp.common.constant.KeywordMatchType;
+import com.addsp.common.constant.AdKeywordStatus;
 import com.addsp.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -20,6 +20,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AdKeyword extends BaseTimeEntity {
 
+    public static final BigDecimal MIN_BID_AMOUNT = new BigDecimal("150");
+    public static final BigDecimal MAX_BID_AMOUNT = new BigDecimal("99000");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,18 +38,18 @@ public class AdKeyword extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private KeywordMatchType matchType;
+    private AdKeywordStatus status;
 
     @Column(nullable = false)
     private BigDecimal bidAmount;
 
     @Builder
     public AdKeyword(Long adGroupId, Long dealId, Long keywordId,
-                     KeywordMatchType matchType, BigDecimal bidAmount) {
+                     AdKeywordStatus status, BigDecimal bidAmount) {
         this.adGroupId = adGroupId;
         this.dealId = dealId;
         this.keywordId = keywordId;
-        this.matchType = matchType;
+        this.status = status != null ? status : AdKeywordStatus.PENDING;
         this.bidAmount = bidAmount;
     }
 
@@ -54,7 +57,23 @@ public class AdKeyword extends BaseTimeEntity {
         this.bidAmount = bidAmount;
     }
 
-    public void updateMatchType(KeywordMatchType matchType) {
-        this.matchType = matchType;
+    public void updateStatus(AdKeywordStatus status) {
+        this.status = status;
+    }
+
+    public void approve() {
+        this.status = AdKeywordStatus.APPROVED;
+    }
+
+    public void reject() {
+        this.status = AdKeywordStatus.REJECTED;
+    }
+
+    public void deactivate() {
+        this.status = AdKeywordStatus.INACTIVE;
+    }
+
+    public boolean isActive() {
+        return this.status == AdKeywordStatus.APPROVED;
     }
 }

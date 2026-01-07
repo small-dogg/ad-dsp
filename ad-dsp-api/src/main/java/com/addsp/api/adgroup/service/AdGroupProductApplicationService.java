@@ -10,6 +10,7 @@ import com.addsp.api.infrastructure.client.dto.ProductPageApiResponse;
 import com.addsp.common.exception.BusinessException;
 import com.addsp.common.exception.ErrorCode;
 import com.addsp.domain.adgroup.service.AdGroupService;
+import com.addsp.domain.keyword.service.AdKeywordService;
 import com.addsp.domain.product.entity.AdGroupProduct;
 import com.addsp.domain.product.repository.AdGroupProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class AdGroupProductApplicationService {
     private final AdGroupProductRepository adGroupProductRepository;
     private final AdGroupService adGroupService;
     private final ProductApiClient productApiClient;
+    private final AdKeywordService adKeywordService;
 
     /**
      * 광고그룹에 상품 추가.
@@ -78,6 +80,7 @@ public class AdGroupProductApplicationService {
 
     /**
      * 광고그룹에서 상품 삭제.
+     * 상품과 연결된 광고 키워드도 함께 삭제된다 (cascade).
      */
     @Transactional
     public void removeProduct(Long partnerId, Long adGroupId, Long productId) {
@@ -92,6 +95,9 @@ public class AdGroupProductApplicationService {
         if (!adGroupProduct.getPartnerId().equals(partnerId)) {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
+
+        // Cascade delete: remove all ad keywords linked to this product in this ad group
+        adKeywordService.deleteAllByAdGroupIdAndDealId(adGroupId, productId);
 
         adGroupProductRepository.deleteByAdGroupIdAndProductId(adGroupId, productId);
     }

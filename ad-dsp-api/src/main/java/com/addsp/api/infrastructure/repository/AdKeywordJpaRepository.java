@@ -1,15 +1,15 @@
-package com.addsp.domain.keyword.repository;
+package com.addsp.api.infrastructure.repository;
 
 import com.addsp.domain.keyword.entity.AdKeyword;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface AdKeywordRepository {
-
-    AdKeyword save(AdKeyword adKeyword);
-
-    Optional<AdKeyword> findById(Long id);
+/**
+ * Spring Data JPA repository for AdKeyword entity.
+ */
+public interface AdKeywordJpaRepository extends JpaRepository<AdKeyword, Long> {
 
     List<AdKeyword> findByAdGroupId(Long adGroupId);
 
@@ -22,8 +22,6 @@ public interface AdKeywordRepository {
     Optional<AdKeyword> findByAdGroupIdAndDealIdAndKeywordId(Long adGroupId, Long dealId, Long keywordId);
 
     boolean existsByAdGroupIdAndDealIdAndKeywordId(Long adGroupId, Long dealId, Long keywordId);
-
-    void deleteById(Long id);
 
     void deleteAllByAdGroupId(Long adGroupId);
 

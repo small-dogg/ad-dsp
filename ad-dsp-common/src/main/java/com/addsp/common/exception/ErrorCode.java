@@ -35,6 +35,12 @@ public enum ErrorCode {
     KEYWORD_NOT_FOUND(404, "K001", "키워드를 찾을 수 없습니다."),
     KEYWORD_ALREADY_EXISTS(409, "K002", "이미 등록된 키워드입니다."),
 
+    // AdKeyword
+    AD_KEYWORD_NOT_FOUND(404, "AK001", "광고 키워드를 찾을 수 없습니다."),
+    AD_KEYWORD_ALREADY_EXISTS(409, "AK002", "이미 등록된 광고 키워드입니다."),
+    AD_KEYWORD_INVALID_BID_AMOUNT(400, "AK003", "입찰가는 150원 이상 99,000원 이하여야 합니다."),
+    AD_KEYWORD_DEAL_NOT_IN_AD_GROUP(400, "AK004", "광고그룹에 등록되지 않은 상품입니다."),
+
     // Billing
     INSUFFICIENT_BALANCE(400, "B001", "잔액이 부족합니다."),
     INVALID_CHARGE_AMOUNT(400, "B002", "유효하지 않은 충전 금액입니다."),
