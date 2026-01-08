@@ -81,9 +81,22 @@
                     <button class="btn btn-primary" onclick="openProductModal()" th:text="#{adGroupDetail.addProduct}">Add Product</button>
                 </div>
                 <div class="card">
-                    <div id="productList" class="product-grid">
-                        <div class="empty-state" th:text="#{common.loading}">Loading...</div>
-                    </div>
+                    <table class="table" id="productTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">ID</th>
+                                <th style="width: 60px;">Image</th>
+                                <th th:text="#{adGroups.name}">Name</th>
+                                <th style="width: 120px;">Price</th>
+                                <th style="width: 140px;" th:text="#{adGroupDetail.createdAt}">Created At</th>
+                                <th style="width: 100px;" th:text="#{adGroups.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productBody">
+                            <tr><td colspan="6" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                    <div id="registeredProductPagination" class="pagination"></div>
                 </div>
             </div>
 
@@ -115,7 +128,7 @@
 
     <!-- Add Product Modal -->
     <div class="modal-overlay" id="productModal" style="display:none;">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
                 <h3 th:text="#{adGroupDetail.addProduct}">Add Product</h3>
                 <button class="modal-close" onclick="closeProductModal()">&times;</button>
@@ -130,12 +143,27 @@
                     </select>
                     <button class="btn btn-secondary" onclick="searchProducts()" th:text="#{adGroupDetail.search}">Search</button>
                 </div>
-                <div id="availableProducts" class="product-grid">
-                    <div class="empty-state" th:text="#{common.loading}">Loading...</div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="table" id="availableProductsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="selectAllProducts" onclick="toggleSelectAll()"></th>
+                                <th style="width: 60px;">ID</th>
+                                <th style="width: 60px;">Image</th>
+                                <th th:text="#{adGroups.name}">Name</th>
+                                <th style="width: 120px;">Price</th>
+                                <th style="width: 80px;" th:text="#{adGroups.status}">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availableProductsBody">
+                            <tr><td colspan="6" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div id="productPagination" class="pagination"></div>
             </div>
             <div class="modal-footer">
+                <span id="selectedCount" style="margin-right: auto; color: #6b7280;">0 selected</span>
                 <button class="btn btn-secondary" onclick="closeProductModal()" th:text="#{common.cancel}">Cancel</button>
                 <button class="btn btn-primary" onclick="addSelectedProducts()" th:text="#{adGroupDetail.addSelected}">Add Selected</button>
             </div>
@@ -181,8 +209,11 @@
 
         const adGroupId = window.location.pathname.split('/').pop();
         let currentPage = 0;
+        let registeredProductPage = 0;
         let selectedProducts = new Set();
         let registeredProductIds = new Set();
+        let allRegisteredProducts = [];
+        const PAGE_SIZE = 50;
 
         const i18n = {
             noProducts: /*[[#{adGroupDetail.noProducts}]]*/ 'No products registered',
@@ -265,14 +296,17 @@
 
         async function loadProducts() {
             const result = await api(`/api/v1/ad-groups/${adGroupId}/products`);
-            const container = document.getElementById('productList');
+            const tbody = document.getElementById('productBody');
 
             if (!result || !result.success || result.data.length === 0) {
-                container.innerHTML = `<div class="empty-state"><p>${i18n.noProducts}</p><p>${i18n.addProductFirst}</p></div>`;
+                tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>${i18n.noProducts}</p><p>${i18n.addProductFirst}</p></div></td></tr>`;
                 registeredProductIds = new Set();
+                allRegisteredProducts = [];
+                document.getElementById('registeredProductPagination').innerHTML = '';
                 return;
             }
 
+            allRegisteredProducts = result.data;
             registeredProductIds = new Set(result.data.map(p => p.productId));
 
             // Load product details from external API
@@ -285,22 +319,64 @@
                 const detail = productDetails[idx]?.data;
                 if (detail) {
                     productNameCache[p.productId] = detail.name;
+                    p.detail = detail;
                 }
             });
 
-            container.innerHTML = result.data.map((p, idx) => {
-                const detail = productDetails[idx]?.data;
+            renderRegisteredProducts();
+            updateKeywordProductSelect();
+        }
+
+        function renderRegisteredProducts() {
+            const tbody = document.getElementById('productBody');
+            const totalPages = Math.ceil(allRegisteredProducts.length / PAGE_SIZE);
+            const start = registeredProductPage * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            const pageProducts = allRegisteredProducts.slice(start, end);
+
+            if (pageProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>${i18n.noProducts}</p></div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pageProducts.map(p => {
+                const detail = p.detail;
+                const createdAt = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-';
                 return `
-                    <div class="product-card">
-                        <button class="remove-btn" onclick="removeProduct(${p.productId})">&times;</button>
-                        <img src="${detail?.imageUrl || ''}" alt="${detail?.name || 'Product'}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%236b7280%22>No Image</text></svg>'">
-                        <h4>${detail?.name || 'Product #' + p.productId}</h4>
-                        <div class="price">${detail?.price ? '₩' + detail.price.toLocaleString() : '-'}</div>
-                    </div>
+                    <tr>
+                        <td>${p.productId}</td>
+                        <td>
+                            <img src="${detail?.imageUrl || ''}" alt="${detail?.name || 'Product'}"
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23f3f4f6%22 width=%2240%22 height=%2240%22/></svg>'">
+                        </td>
+                        <td>${detail?.name || 'Product #' + p.productId}</td>
+                        <td>${detail?.price ? '₩' + detail.price.toLocaleString() : '-'}</td>
+                        <td>${createdAt}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="removeProduct(${p.productId})">Delete</button>
+                        </td>
+                    </tr>
                 `;
             }).join('');
 
-            updateKeywordProductSelect();
+            // Pagination
+            let paginationHtml = '';
+            if (totalPages > 1) {
+                paginationHtml += `<button onclick="goToRegisteredPage(${registeredProductPage - 1})" ${registeredProductPage === 0 ? 'disabled' : ''}>&lt;</button>`;
+                const startPage = Math.max(0, registeredProductPage - 2);
+                const endPage = Math.min(totalPages, startPage + 5);
+                for (let i = startPage; i < endPage; i++) {
+                    paginationHtml += `<button onclick="goToRegisteredPage(${i})" class="${i === registeredProductPage ? 'active' : ''}">${i + 1}</button>`;
+                }
+                paginationHtml += `<button onclick="goToRegisteredPage(${registeredProductPage + 1})" ${registeredProductPage >= totalPages - 1 ? 'disabled' : ''}>&gt;</button>`;
+            }
+            document.getElementById('registeredProductPagination').innerHTML = paginationHtml;
+        }
+
+        function goToRegisteredPage(page) {
+            registeredProductPage = page;
+            renderRegisteredProducts();
         }
 
         async function removeProduct(productId) {
@@ -326,13 +402,15 @@
             document.getElementById('productModal').style.display = 'none';
         }
 
+        let availableProductsData = [];
+
         async function loadAvailableProducts() {
             const search = document.getElementById('productSearch').value;
             const sortType = document.getElementById('productSortType').value;
 
             const params = new URLSearchParams({
                 page: currentPage,
-                limit: 8,
+                limit: PAGE_SIZE,
                 sortType: sortType
             });
             if (search) {
@@ -341,33 +419,58 @@
             }
 
             const result = await api(`/api/v1/products?${params}`);
-            const container = document.getElementById('availableProducts');
+            const tbody = document.getElementById('availableProductsBody');
 
             if (!result || !result.success || !result.data.content || result.data.content.length === 0) {
-                container.innerHTML = `<div class="empty-state">${i18n.noProductsFound}</div>`;
+                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">${i18n.noProductsFound}</div></td></tr>`;
                 document.getElementById('productPagination').innerHTML = '';
+                availableProductsData = [];
                 return;
             }
 
-            container.innerHTML = result.data.content.map(p => `
-                <div class="product-card ${selectedProducts.has(p.id) ? 'selected' : ''} ${registeredProductIds.has(p.id) ? 'registered' : ''}"
-                     onclick="${registeredProductIds.has(p.id) ? '' : `toggleProductSelection(${p.id})`}"
-                     style="${registeredProductIds.has(p.id) ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-                    <img src="${p.imageUrl || ''}" alt="${p.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%236b7280%22>No Image</text></svg>'">
-                    <h4>${p.name}</h4>
-                    <div class="price">₩${p.price?.toLocaleString() || '-'}</div>
-                </div>
-            `).join('');
+            availableProductsData = result.data.content;
+
+            tbody.innerHTML = result.data.content.map(p => {
+                const isRegistered = registeredProductIds.has(p.id);
+                const isSelected = selectedProducts.has(p.id);
+                return `
+                    <tr style="${isRegistered ? 'opacity: 0.5;' : ''}">
+                        <td>
+                            <input type="checkbox"
+                                   ${isSelected ? 'checked' : ''}
+                                   ${isRegistered ? 'disabled' : ''}
+                                   onchange="toggleProductSelection(${p.id})">
+                        </td>
+                        <td>${p.id}</td>
+                        <td>
+                            <img src="${p.imageUrl || ''}" alt="${p.name}"
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23f3f4f6%22 width=%2240%22 height=%2240%22/></svg>'">
+                        </td>
+                        <td>${p.name}${isRegistered ? ' (registered)' : ''}</td>
+                        <td>₩${p.price?.toLocaleString() || '-'}</td>
+                        <td><span class="badge ${p.status === 'ACTIVE' ? 'badge-active' : 'badge-stopped'}">${p.status || '-'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update select all checkbox state
+            updateSelectAllState();
 
             // Pagination
             const { totalPages } = result.data;
             let paginationHtml = '';
-            paginationHtml += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>&lt;</button>`;
-            for (let i = 0; i < totalPages && i < 5; i++) {
-                paginationHtml += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i + 1}</button>`;
+            if (totalPages > 1) {
+                paginationHtml += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>&lt;</button>`;
+                const startPage = Math.max(0, currentPage - 2);
+                const endPage = Math.min(totalPages, startPage + 5);
+                for (let i = startPage; i < endPage; i++) {
+                    paginationHtml += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i + 1}</button>`;
+                }
+                paginationHtml += `<button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages - 1 ? 'disabled' : ''}>&gt;</button>`;
             }
-            paginationHtml += `<button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages - 1 ? 'disabled' : ''}>&gt;</button>`;
             document.getElementById('productPagination').innerHTML = paginationHtml;
+            updateSelectedCount();
         }
 
         function toggleProductSelection(productId) {
@@ -376,7 +479,32 @@
             } else {
                 selectedProducts.add(productId);
             }
+            updateSelectAllState();
+            updateSelectedCount();
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAllProducts').checked;
+            availableProductsData.forEach(p => {
+                if (!registeredProductIds.has(p.id)) {
+                    if (selectAll) {
+                        selectedProducts.add(p.id);
+                    } else {
+                        selectedProducts.delete(p.id);
+                    }
+                }
+            });
             loadAvailableProducts();
+        }
+
+        function updateSelectAllState() {
+            const selectableProducts = availableProductsData.filter(p => !registeredProductIds.has(p.id));
+            const allSelected = selectableProducts.length > 0 && selectableProducts.every(p => selectedProducts.has(p.id));
+            document.getElementById('selectAllProducts').checked = allSelected;
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = `${selectedProducts.size} selected`;
         }
 
         function goToPage(page) {
