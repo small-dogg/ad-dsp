@@ -3,6 +3,7 @@ package com.addsp.api.adgroup.service;
 import com.addsp.api.adgroup.dto.request.CreateAdKeywordRequest;
 import com.addsp.api.adgroup.dto.request.UpdateAdKeywordBidRequest;
 import com.addsp.api.adgroup.dto.response.AdKeywordResponse;
+import com.addsp.api.outbox.service.OutboxService;
 import com.addsp.common.exception.BusinessException;
 import com.addsp.common.exception.ErrorCode;
 import com.addsp.domain.adgroup.service.AdGroupService;
@@ -10,6 +11,8 @@ import com.addsp.domain.keyword.entity.AdKeyword;
 import com.addsp.domain.keyword.entity.Keyword;
 import com.addsp.domain.keyword.service.AdKeywordService;
 import com.addsp.domain.keyword.service.KeywordService;
+import com.addsp.domain.outbox.event.AdKeywordChangedEvent;
+import com.addsp.domain.outbox.event.AdKeywordDeletedEvent;
 import com.addsp.domain.product.repository.AdGroupProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ public class AdKeywordApplicationService {
     private final KeywordService keywordService;
     private final AdGroupService adGroupService;
     private final AdGroupProductRepository adGroupProductRepository;
+    private final OutboxService outboxService;
 
     /**
      * 광고그룹에 광고 키워드 추가.
@@ -101,6 +105,16 @@ public class AdKeywordApplicationService {
 
         adKeyword = adKeywordService.updateBidAmount(adKeywordId, request.bidAmount());
 
+        // Publish event for bid amount change
+        outboxService.save(AdKeywordChangedEvent.of(
+                adKeyword.getId(),
+                adKeyword.getAdGroupId(),
+                adKeyword.getDealId(),
+                adKeyword.getKeywordId(),
+                adKeyword.getStatus(),
+                adKeyword.getBidAmount()
+        ));
+
         Keyword keyword = keywordService.findById(adKeyword.getKeywordId());
         return AdKeywordResponse.from(adKeyword, keyword.getKeyword());
     }
@@ -119,6 +133,14 @@ public class AdKeywordApplicationService {
         if (!adKeyword.getAdGroupId().equals(adGroupId)) {
             throw new BusinessException(ErrorCode.AD_KEYWORD_NOT_FOUND);
         }
+
+        // Publish delete event before deletion
+        outboxService.save(AdKeywordDeletedEvent.of(
+                adKeyword.getId(),
+                adKeyword.getAdGroupId(),
+                adKeyword.getDealId(),
+                adKeyword.getKeywordId()
+        ));
 
         adKeywordService.delete(adKeywordId);
     }

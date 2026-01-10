@@ -29,6 +29,10 @@ dependencies {
     // Database
     runtimeOnly 'org.postgresql:postgresql'
 
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // Test
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
