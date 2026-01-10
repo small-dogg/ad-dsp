@@ -103,6 +103,10 @@ public class AdGroup extends BaseTimeEntity {
         this.status = AdStatus.ENDED;
     }
 
+    public void pending() {
+        this.status = AdStatus.PENDING;
+    }
+
     public boolean isActive() {
         return this.status == AdStatus.ACTIVE;
     }

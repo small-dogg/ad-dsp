@@ -79,4 +79,10 @@ public class AdGroupApplicationService {
     public void delete(Long partnerId, Long adGroupId) {
         adGroupService.delete(partnerId, adGroupId);
     }
+
+    @Transactional
+    public AdGroupResponse toggleStatus(Long partnerId, Long adGroupId, boolean enabled) {
+        AdGroup adGroup = adGroupService.toggleStatus(partnerId, adGroupId, enabled);
+        return AdGroupResponse.from(adGroup);
+    }
 }

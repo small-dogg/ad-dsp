@@ -1,10 +1,12 @@
 package com.addsp.domain.adgroup.service;
 
+import com.addsp.common.constant.AdKeywordStatus;
 import com.addsp.common.constant.BudgetType;
 import com.addsp.common.exception.BusinessException;
 import com.addsp.common.exception.ErrorCode;
 import com.addsp.domain.adgroup.entity.AdGroup;
 import com.addsp.domain.adgroup.repository.AdGroupRepository;
+import com.addsp.domain.keyword.repository.AdKeywordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.util.List;
 public class AdGroupService {
 
     private final AdGroupRepository adGroupRepository;
+    private final AdKeywordRepository adKeywordRepository;
 
     @Transactional
     public AdGroup create(Long partnerId, String name, BudgetType budgetType, BigDecimal dailyBudget,
@@ -87,6 +90,31 @@ public class AdGroupService {
         AdGroup adGroup = findByIdAndPartnerId(adGroupId, partnerId);
         validateNameDuplicateExcludeSelf(partnerId, name, adGroupId);
         adGroup.updateName(name);
+        return adGroup;
+    }
+
+    /**
+     * 광고그룹 상태 토글.
+     * enabled=true: 모든 AdKeyword가 APPROVED면 ACTIVE, 아니면 PENDING
+     * enabled=false: STOPPED
+     */
+    @Transactional
+    public AdGroup toggleStatus(Long partnerId, Long adGroupId, boolean enabled) {
+        AdGroup adGroup = findByIdAndPartnerId(adGroupId, partnerId);
+
+        if (enabled) {
+            long totalCount = adKeywordRepository.countByAdGroupId(adGroupId);
+            long nonApprovedCount = adKeywordRepository.countByAdGroupIdAndStatusNot(adGroupId, AdKeywordStatus.APPROVED);
+
+            if (totalCount > 0 && nonApprovedCount == 0) {
+                adGroup.activate();
+            } else {
+                adGroup.pending();
+            }
+        } else {
+            adGroup.stop();
+        }
+
         return adGroup;
     }
 

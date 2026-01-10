@@ -1,6 +1,7 @@
 package com.addsp.api.adgroup.controller;
 
 import com.addsp.api.adgroup.dto.request.CreateAdGroupRequest;
+import com.addsp.api.adgroup.dto.request.ToggleStatusRequest;
 import com.addsp.api.adgroup.dto.request.UpdateBudgetRequest;
 import com.addsp.api.adgroup.dto.request.UpdateNameRequest;
 import com.addsp.api.adgroup.dto.request.UpdateScheduleRequest;
@@ -106,6 +107,20 @@ public class AdGroupController {
             @Valid @RequestBody UpdateNameRequest request) {
         AdGroupResponse response = adGroupApplicationService.updateName(
                 userDetails.getPartnerId(), id, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * PATCH /api/v1/ad-groups/{id}/status
+     * 광고그룹 상태 토글 (ON: PENDING/ACTIVE, OFF: STOPPED).
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<AdGroupResponse>> toggleStatus(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody ToggleStatusRequest request) {
+        AdGroupResponse response = adGroupApplicationService.toggleStatus(
+                userDetails.getPartnerId(), id, request.enabled());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

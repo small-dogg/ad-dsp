@@ -28,4 +28,8 @@ public interface AdKeywordRepository {
     void deleteAllByAdGroupId(Long adGroupId);
 
     void deleteAllByAdGroupIdAndDealId(Long adGroupId, Long dealId);
+
+    long countByAdGroupId(Long adGroupId);
+
+    long countByAdGroupIdAndStatusNot(Long adGroupId, com.addsp.common.constant.AdKeywordStatus status);
 }

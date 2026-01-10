@@ -1,5 +1,6 @@
 package com.addsp.api.infrastructure.repository;
 
+import com.addsp.common.constant.AdKeywordStatus;
 import com.addsp.domain.keyword.entity.AdKeyword;
 import com.addsp.domain.keyword.repository.AdKeywordRepository;
 import lombok.RequiredArgsConstructor;
@@ -70,5 +71,15 @@ public class AdKeywordRepositoryAdapter implements AdKeywordRepository {
     @Override
     public void deleteAllByAdGroupIdAndDealId(Long adGroupId, Long dealId) {
         adKeywordJpaRepository.deleteAllByAdGroupIdAndDealId(adGroupId, dealId);
+    }
+
+    @Override
+    public long countByAdGroupId(Long adGroupId) {
+        return adKeywordJpaRepository.countByAdGroupId(adGroupId);
+    }
+
+    @Override
+    public long countByAdGroupIdAndStatusNot(Long adGroupId, AdKeywordStatus status) {
+        return adKeywordJpaRepository.countByAdGroupIdAndStatusNot(adGroupId, status);
     }
 }

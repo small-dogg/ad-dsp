@@ -1,5 +1,6 @@
 package com.addsp.api.infrastructure.repository;
 
+import com.addsp.common.constant.AdKeywordStatus;
 import com.addsp.domain.keyword.entity.AdKeyword;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -26,4 +27,8 @@ public interface AdKeywordJpaRepository extends JpaRepository<AdKeyword, Long> {
     void deleteAllByAdGroupId(Long adGroupId);
 
     void deleteAllByAdGroupIdAndDealId(Long adGroupId, Long dealId);
+
+    long countByAdGroupId(Long adGroupId);
+
+    long countByAdGroupIdAndStatusNot(Long adGroupId, AdKeywordStatus status);
 }

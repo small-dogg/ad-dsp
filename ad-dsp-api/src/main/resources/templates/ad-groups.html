@@ -53,17 +53,18 @@
                     <table class="table" id="adGroupTable">
                         <thead>
                             <tr>
+                                <th style="width:60px;"></th>
+                                <th th:text="#{adGroups.status}">Status</th>
                                 <th th:text="#{adGroups.name}">Name</th>
                                 <th th:text="#{adGroups.budgetType}">Budget Type</th>
                                 <th th:text="#{adGroups.dailyBudget}">Daily Budget</th>
                                 <th th:text="#{adGroups.schedule}">Schedule</th>
-                                <th th:text="#{adGroups.status}">Status</th>
                                 <th th:text="#{adGroups.products}">Products</th>
                                 <th th:text="#{adGroups.actions}">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="adGroupBody">
-                            <tr><td colspan="7" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
+                            <tr><td colspan="8" class="empty-state" th:text="#{common.loading}">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -172,15 +173,21 @@
         }
 
         function getSchedule(ag) {
-            const days = [];
-            if (ag.mon) days.push('M');
-            if (ag.tue) days.push('T');
-            if (ag.wed) days.push('W');
-            if (ag.thu) days.push('T');
-            if (ag.fri) days.push('F');
-            if (ag.sat) days.push('S');
-            if (ag.sun) days.push('S');
-            return days.join(' ');
+            const days = [
+                { key: 'mon', label: '월', weekend: false },
+                { key: 'tue', label: '화', weekend: false },
+                { key: 'wed', label: '수', weekend: false },
+                { key: 'thu', label: '목', weekend: false },
+                { key: 'fri', label: '금', weekend: false },
+                { key: 'sat', label: '토', weekend: true },
+                { key: 'sun', label: '일', weekend: true }
+            ];
+            return days.map(d => {
+                const active = ag[d.key];
+                const bgColor = active ? (d.weekend ? '#dc2626' : '#667eea') : '#e5e7eb';
+                const textColor = active ? '#fff' : '#9ca3af';
+                return `<span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;font-size:10px;font-weight:600;border-radius:3px;background:${bgColor};color:${textColor};margin-right:2px;">${d.label}</span>`;
+            }).join('');
         }
 
         async function loadAdGroups() {
@@ -188,7 +195,7 @@
             const tbody = document.getElementById('adGroupBody');
 
             if (!result || !result.success || result.data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+                tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
                     <h3>${i18n.noData}</h3>
                     <p>${i18n.createFirst}</p>
                 </div></td></tr>`;
@@ -202,11 +209,17 @@
 
             tbody.innerHTML = result.data.map((ag, idx) => `
                 <tr ondblclick="goToDetail(${ag.id})" style="cursor:pointer;">
+                    <td onclick="event.stopPropagation();">
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${ag.status !== 'STOPPED' ? 'checked' : ''} onchange="toggleAdGroup(${ag.id}, this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td>${getStatusBadge(ag.status)}</td>
                     <td><strong>${ag.name}</strong></td>
                     <td>${ag.budgetType}</td>
                     <td>${ag.budgetType === 'UNLIMITED' ? '-' : '₩' + ag.dailyBudget.toLocaleString()}</td>
                     <td>${getSchedule(ag)}</td>
-                    <td>${getStatusBadge(ag.status)}</td>
                     <td><span class="badge badge-info">${productCounts[idx]}</span></td>
                     <td class="actions">
                         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); goToDetail(${ag.id})">${i18n.detail}</button>
@@ -319,6 +332,16 @@
 
         function goToDetail(id) {
             window.location.href = `/ad-groups/${id}`;
+        }
+
+        async function toggleAdGroup(id, enabled) {
+            const result = await api(`/api/v1/ad-groups/${id}/status`, 'PATCH', { enabled });
+            if (result && result.success) {
+                loadAdGroups();
+            } else {
+                alert(result?.error?.message || i18n.failed);
+                loadAdGroups();
+            }
         }
 
         loadAdGroups();
